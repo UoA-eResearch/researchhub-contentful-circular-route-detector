@@ -1,14 +1,15 @@
 const https = require('https');
 
-const defaultOptions = {
-    host: 'rhubcpapi.sandbox.amazon.auckland.ac.nz',
-    port: 443, // or 443 for https
+let defaultOptions = {
+    host: 'rhubcpapi-dev.connect.test.amazon.auckland.ac.nz',
+    port: 443,
     headers: {
         'Content-Type': 'application/json',
     }
 }
 
 const post = (path, payload) => new Promise((resolve, reject) => {
+    console.log(JSON.stringify(defaultOptions));
     const options = { ...defaultOptions, path, method: 'POST' };
     const req = https.request(options, res => {
         let buffer = "";
@@ -20,15 +21,27 @@ const post = (path, payload) => new Promise((resolve, reject) => {
     req.end();
 })
 
-exports.handler = async(event) => {
-    // TODO implement
+exports.main = async(event) => {
+    // set the correct graphql server domain. We can use dev, test or prod server to test
+    // the corresponding contentful environments. Default is dev.
+    if (event.hasOwnProperty('httpMethod') && event.httpMethod === "GET") {
+        // the lambda was invoked via api gateway
+        if (event.pathParameters !== null) {
+            defaultOptions.host = event.pathParameters.graphqlserverdomain;
+        }
+    } else {
+        // the lambda was probably invoked by scheduled event
+        console.log(event.graphqlServerDomain);
+        defaultOptions.host = event.graphqlServerDomain;
+    }
+
     const response = await getDuplicates();
     return response;
 };
 
 let getDuplicates = async() => {
 
-    let res = await post("/", { query: `
+    let res = await post('/cer-graphql-service/', { query: `
     {
       subHubCollection {
         items {
@@ -78,35 +91,28 @@ let getDuplicates = async() => {
         }
     }
 
-    let responseMsg = "";
+    let responseMsg = '';
     let statusCode;
 
     if (duplicates.length) {
         statusCode = 500;
-        responseMsg = " <b style='color: red'>WARNING:</b> Circular SubHub child page structures detected <br /><br />"
+        responseMsg = 'WARNING: Circular SubHub child page structures detected. \n';
         duplicates.forEach(duplicate => {
-            responseMsg = responseMsg + `The <i>${duplicate.type}</i> page: <pre>${duplicate.slug}</pre> has multiple <i>SubHub</i> parents: <pre>${duplicate.parentSubHubs.join(', ')}</pre><br />`
+            responseMsg = responseMsg + `The ${duplicate.type} page: ${duplicate.slug} has multiple SubHub parents: ${duplicate.parentSubHubs.join(', ')}. \n`
         });
-        responseMsg += `<br/><img src="https://i.giphy.com/media/bcrOR2stk6tKIxqPOZ/giphy.webp" width="300px" frameBorder="0"></img>`;
     }
     else {
         statusCode = 200;
-        responseMsg = `
-        No circular SubHub child page structures detected
-        <br /><br /><br />
-        <img src="https://i.giphy.com/media/xSM46ernAUN3y/giphy.webp" width="200px" frameBorder="0"></img>
-        `;
+        responseMsg = 'No circular SubHub child page structures detected';
     }
+
+    console.log(responseMsg);
 
     return {
         statusCode: statusCode,
-        body: `<center>
-        <h1>ResearchHub Circular SubHub Detector</h1>
-        <hr />
-         ${responseMsg}
-        </center>`,
-        "headers": {
-            'Content-Type': 'text/html',
-         }
+        body: responseMsg,
+        headers: {
+          'Content-Type': 'application/json',
+        }
     };
 };

@@ -1,0 +1,21 @@
+{
+  "name": "researchhub-contentful-circular-route-detector",
+  "version": "1.0.0",
+  "description": "Serverless Framework Lambda functions to detect circular routes within the ResearchHub Contentful entries.",
+  "main": "handler.js",
+  "scripts": {
+    "start": "sls offline",
+    "debug": "export SLS_DEBUG=* && node --inspect ./node_modules/.bin/sls offline",
+    "deploy": "sls deploy"
+  },
+  "keywords": [
+    "Lambda",
+    "Serverless",
+    "Framework"
+  ],
+  "author": "Rose McColl",
+  "license": "MIT",
+  "devDependencies": {
+    "serverless-offline": "^7.0.0"
+  }
+}

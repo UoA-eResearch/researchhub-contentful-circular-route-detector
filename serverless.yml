@@ -38,10 +38,14 @@ provider:
     Faculty: ${self:custom.Faculty}
   deploymentBucket:
     name: ${self:custom.bucketBaseName}-test
+  apiGateway:
+    apiKeySourceType: HEADER
+  apiKeys:
+    - name: ${self:service}-${self:provider.stage}-apiKey
 
 # you can define service wide environment variables here
-environment:
-  variable1: value1
+# environment:
+#   variable1: value1
     
 package:
   exclude:
@@ -57,11 +61,26 @@ functions:
   detect-circular:
     handler: handler.main
     events:
+      # can be invoked via api gateway. Pass in the graphql server domain you want to test against.
       - http:
-          path: /
+          path: /{graphqlserverdomain}
           method: get
           cors:
             true
+          private: true
+      # Scheduled triggers, to test each of the three Contentful environments (dev/test/prod)
+      - schedule:
+          rate: rate(1 hour)
+          input:
+            graphqlServerDomain: rhubcpapi.auckland.ac.nz
+      - schedule:
+          rate: rate(1 hour)
+          input:
+            graphqlServerDomain: rhubcpapi.connect.test.amazon.auckland.ac.nz
+      - schedule:
+          rate: rate(1 hour)
+          input:
+            graphqlServerDomain: rhubcpapi-dev.connect.test.amazon.auckland.ac.nz
 
 plugins:
   - serverless-offline
@@ -100,24 +119,3 @@ resources:
                           - Ref: "AWS::Region"
                           - Ref: "AWS::AccountId"
                           - "log-group:/aws/lambda/*:*:*"
-                - Effect: Allow
-                  Action:
-                    - ssm:GetParameter
-                    - ssm:GetParameters
-                  Resource:
-                    - "Fn::Join":
-                        - ":"
-                        - - "arn:aws:ssm"
-                          - Ref: "AWS::Region"
-                          - Ref: "AWS::AccountId"
-                          - "parameter/${self:provider.stage}/research-hub/*"
-                - Effect: Allow
-                  Action:
-                    - kms:Decrypt
-                  Resource:
-                    - "Fn::Join":
-                        - ":"
-                        - - "arn:aws:kms"
-                          - Ref: "AWS::Region"
-                          - Ref: "AWS::AccountId"
-                          - "key/${file(env/${self:provider.stage}.json):resourceKey}"
