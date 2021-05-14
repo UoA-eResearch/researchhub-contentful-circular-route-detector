@@ -71,16 +71,35 @@ let getDuplicates = async() => {
     }
     ` });
 
+    let responseMsg = '';
+
+    if (res.hasOwnProperty('errors')) {
+        res.errors.forEach(err => {
+            try {
+                if (err.message.includes('Did not fetch typename for object')) {
+                    responseMsg = responseMsg + `WARNING: Typename error encountered on page: ${res.data.subHubCollection.items[err.path[2]].slug} \n`;
+                }
+            } catch (e) {
+                console.log(e);
+            }
+        })
+    }
     res = res.data.subHubCollection.items;
 
     let childPages = [];
     res.forEach(subHub => {
+        // Remove nulls in case of typename error.
+        subHub.internalPagesCollection.items = subHub.internalPagesCollection.items.filter(item => item);
+        
         subHub.internalPagesCollection.items.forEach(childPage => {
-            childPages[childPage.slug] = {
-                slug: childPage.slug,
-                type: childPage.__typename,
-                parentSubHubs: !!childPages[childPage.slug] && childPages[childPage.slug].type == childPage.__typename ? [...childPages[childPage.slug]['parentSubHubs'], subHub.slug] : [subHub.slug]
-            };
+            // if no typename property, then ignore those ones. They may be draft content that is linked to within the page.
+            if (childPage.hasOwnProperty('__typename')) {
+                childPages[childPage.slug] = {
+                    slug: childPage.slug,
+                    type: childPage.__typename,
+                    parentSubHubs: !!childPages[childPage.slug] && childPages[childPage.slug].type == childPage.__typename ? [...childPages[childPage.slug]['parentSubHubs'], subHub.slug] : [subHub.slug]
+                };
+            }
         })
     });
 
@@ -91,19 +110,18 @@ let getDuplicates = async() => {
         }
     }
 
-    let responseMsg = '';
     let statusCode;
 
     if (duplicates.length) {
         statusCode = 500;
-        responseMsg = 'WARNING: Circular SubHub child page structures detected. \n';
+        responseMsg = responseMsg + 'WARNING: Circular SubHub child page structures detected. \n';
         duplicates.forEach(duplicate => {
             responseMsg = responseMsg + `The ${duplicate.type} page: ${duplicate.slug} has multiple SubHub parents: ${duplicate.parentSubHubs.join(', ')}. \n`
         });
     }
     else {
         statusCode = 200;
-        responseMsg = 'No circular SubHub child page structures detected';
+        responseMsg = responseMsg + 'No circular SubHub child page structures detected';
     }
 
     console.log(responseMsg);
