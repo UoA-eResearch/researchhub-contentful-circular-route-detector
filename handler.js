@@ -77,7 +77,7 @@ let getDuplicates = async() => {
         res.errors.forEach(err => {
             try {
                 if (err.message.includes('Did not fetch typename for object')) {
-                    responseMsg = responseMsg + `WARNING: Typename error encountered on page: ${res.data.subHubCollection.items[err.path[2]].slug} \n`;
+                    responseMsg = responseMsg + `WARNING: Typename error encountered. Page slug: ${res.data.subHubCollection.items[err.path[2]].slug} \n`;
                 }
             } catch (e) {
                 console.log(e);
