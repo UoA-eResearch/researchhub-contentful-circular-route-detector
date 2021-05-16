@@ -9,7 +9,6 @@ let defaultOptions = {
 }
 
 const post = (path, payload) => new Promise((resolve, reject) => {
-    console.log(JSON.stringify(defaultOptions));
     const options = { ...defaultOptions, path, method: 'POST' };
     const req = https.request(options, res => {
         let buffer = "";
@@ -31,9 +30,10 @@ exports.main = async(event) => {
         }
     } else {
         // the lambda was probably invoked by scheduled event
-        console.log(event.graphqlServerDomain);
         defaultOptions.host = event.graphqlServerDomain;
     }
+
+    console.log('Target API: ' + defaultOptions.host);
 
     const response = await getDuplicates();
     return response;

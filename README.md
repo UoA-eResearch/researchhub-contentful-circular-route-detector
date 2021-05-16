@@ -1,6 +1,7 @@
 # researchhub-contentful-circular-route-detector
 * AWS Serverless (Lambda) function that detects circular routes, and typename errors, within the ResearchHub Contentful entries.
 * Acts as a backup check if the Contentful extension app (subhub-link-checker) fails to detect a circular route. Logs from this lambda are used to generate alerts in Grafana which will notify the dev team. 
+* The lambda runs on an hourly schedule and is triggered three times - once for each of the three contentful environments. The lambda can also be called via API gateway using a GET request. The request must include the API key (obtained from API Gateway console) in the `x-api-key` header.
 * Built using the [Serverless Framework](https://serverless.com/)
 
 ## Setup
