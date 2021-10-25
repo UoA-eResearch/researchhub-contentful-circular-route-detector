@@ -1,10 +1,12 @@
 const https = require('https');
 
 let defaultOptions = {
-    host: 'rhubcpapi-dev.connect.test.amazon.auckland.ac.nz',
+    host: '',
     port: 443,
     headers: {
         'Content-Type': 'application/json',
+        // to test the preview api (locally) change the url to /cer-graphql-preview-service/ and add auth token here e.g.:
+        // 'authorization': `Bearer <TOKEN>`
     }
 }
 
