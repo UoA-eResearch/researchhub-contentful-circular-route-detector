@@ -16,6 +16,6 @@
   "author": "Rose McColl",
   "license": "MIT",
   "devDependencies": {
-    "serverless-offline": "^7.0.0"
+    "serverless-offline": "^13.9.0"
   }
 }
